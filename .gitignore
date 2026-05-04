@@ -1,12 +1,1 @@
-# Ignore media and output folders
-data/
-output/
-
-# Ignore video and image files 
-*.mp4
-*.jpg
-*.png
-
-# Ignore Python cache
 __pycache__/
-*.pyc
