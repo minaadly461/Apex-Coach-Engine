@@ -1,5 +1,8 @@
-ultralytics
-opencv-python
-numpy
-matplotlib
-scipy
+ultralytics==8.2.0
+opencv-python==4.9.0.80
+numpy==1.24.4
+matplotlib==3.7.5
+scipy==1.10.1
+mediapipe==0.10.9
+protobuf==3.20.3
+pyttsx3
