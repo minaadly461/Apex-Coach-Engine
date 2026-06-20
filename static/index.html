@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apex Coach</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #0a0a0a;
+        color: #fff;
+        font-family: "Segoe UI", sans-serif;
+        min-height: 100vh;
+      }
+
+      /* ── SETUP SCREEN ── */
+      #setup-screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        gap: 20px;
+        padding: 20px;
+      }
+
+      #setup-screen h1 {
+        font-size: 2rem;
+        color: #00ffcc;
+        letter-spacing: 2px;
+      }
+
+      #setup-screen select,
+      #setup-screen input {
+        width: 300px;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #333;
+        background: #1a1a1a;
+        color: #fff;
+        font-size: 1rem;
+      }
+
+      #setup-screen button {
+        width: 300px;
+        padding: 14px;
+        border-radius: 8px;
+        border: none;
+        background: #00ffcc;
+        color: #0a0a0a;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+
+      #setup-screen button:hover {
+        opacity: 0.85;
+      }
+
+      /* ── WORKOUT SCREEN ── */
+      #workout-screen {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        gap: 16px;
+      }
+
+      #workout-screen h2 {
+        color: #00ffcc;
+        font-size: 1.4rem;
+        letter-spacing: 1px;
+      }
+
+      video {
+        width: 100%;
+        max-width: 480px;
+        border-radius: 12px;
+        border: 2px solid #222;
+        transform: scaleX(-1);
+      }
+
+      /* Stats */
+      .stats {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .stat-box {
+        background: #1a1a1a;
+        border-radius: 10px;
+        padding: 16px 28px;
+        text-align: center;
+        border: 1px solid #333;
+      }
+
+      .stat-box .value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #00ffcc;
+      }
+
+      .stat-box .label {
+        font-size: 0.8rem;
+        color: #888;
+        margin-top: 4px;
+      }
+
+      /* Status */
+      #status-msg {
+        font-size: 1rem;
+        color: #aaa;
+        min-height: 24px;
+      }
+
+      #form-warning {
+        font-size: 1rem;
+        color: #ff003c;
+        font-weight: bold;
+        min-height: 24px;
+      }
+
+      /* Progress bar */
+      .progress-wrap {
+        width: 100%;
+        max-width: 480px;
+        background: #1a1a1a;
+        border-radius: 8px;
+        height: 10px;
+        overflow: hidden;
+      }
+
+      #progress-bar {
+        height: 100%;
+        background: #00ffcc;
+        width: 0%;
+        transition: width 0.3s;
+      }
+
+      /* Stop button */
+      #stop-btn {
+        padding: 10px 32px;
+        border-radius: 8px;
+        border: 1px solid #ff003c;
+        background: transparent;
+        color: #ff003c;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      #stop-btn:hover {
+        background: #ff003c22;
+      }
+
+      /* ── ANALYTICS SCREEN ── */
+      #analytics-screen {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        gap: 20px;
+      }
+
+      #analytics-screen h2 {
+        color: #00ffcc;
+        font-size: 1.6rem;
+      }
+
+      .analytics-stats {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .charts {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        max-width: 900px;
+      }
+
+      .chart-box {
+        background: #111;
+        border-radius: 12px;
+        padding: 16px;
+        flex: 1;
+        min-width: 300px;
+      }
+
+      .chart-box h3 {
+        color: #aaa;
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .bad-reps-list {
+        width: 100%;
+        max-width: 600px;
+        background: #111;
+        border-radius: 12px;
+        padding: 16px;
+      }
+
+      .bad-reps-list h3 {
+        color: #ff003c;
+        margin-bottom: 10px;
+      }
+
+      .bad-reps-list ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .bad-reps-list ul li {
+        color: #ccc;
+        padding: 6px 0;
+        border-bottom: 1px solid #222;
+        font-size: 0.9rem;
+      }
+
+      #restart-btn {
+        padding: 12px 40px;
+        border-radius: 8px;
+        border: none;
+        background: #00ffcc;
+        color: #0a0a0a;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ══════════════════════════════════════
+     SETUP SCREEN
+══════════════════════════════════════ -->
+    <div id="setup-screen">
+      <h1>🏆 APEX COACH</h1>
+
+      <select id="exercise-select">
+        <option value="bicep_curl">Bicep Curl</option>
+        <option value="bench_press">Bench Press</option>
+        <option value="tri_pushdown">Triceps Pushdown</option>
+        <option value="shoulder_press">Shoulder Press</option>
+        <option value="lat_pulldown">Lat Pulldown</option>
+        <option value="leg_extension">Leg Extension</option>
+      </select>
+
+      <input
+        type="number"
+        id="target-reps"
+        placeholder="Target Reps (e.g. 10)"
+        min="1"
+        max="100"
+        value="10"
+      />
+
+      <button onclick="startWorkout()">START WORKOUT</button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     WORKOUT SCREEN
+══════════════════════════════════════ -->
+    <div id="workout-screen">
+      <h2 id="exercise-title">BICEP CURL</h2>
+
+      <video id="camera" autoplay playsinline muted></video>
+      <canvas id="capture-canvas" style="display: none"></canvas>
+
+      <div class="stats">
+        <div class="stat-box">
+          <div class="value" id="good-reps-display">0</div>
+          <div class="label">GOOD REPS</div>
+        </div>
+        <div class="stat-box">
+          <div class="value" id="target-display">0</div>
+          <div class="label">TARGET</div>
+        </div>
+        <div class="stat-box">
+          <div class="value" id="bad-reps-display" style="color: #ff003c">
+            0
+          </div>
+          <div class="label">BAD REPS</div>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div id="progress-bar"></div>
+      </div>
+
+      <div id="status-msg">Connecting...</div>
+      <div id="form-warning"></div>
+
+      <button id="stop-btn" onclick="stopWorkout()">STOP</button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     ANALYTICS SCREEN
+══════════════════════════════════════ -->
+    <div id="analytics-screen">
+      <h2>📊 WORKOUT COMPLETE</h2>
+
+      <div class="analytics-stats">
+        <div class="stat-box">
+          <div class="value" id="final-good" style="color: #00ffcc">0</div>
+          <div class="label">GOOD REPS</div>
+        </div>
+        <div class="stat-box">
+          <div class="value" id="final-bad" style="color: #ff003c">0</div>
+          <div class="label">BAD REPS</div>
+        </div>
+      </div>
+
+      <div class="charts">
+        <div class="chart-box">
+          <h3>Rep Speed (seconds)</h3>
+          <canvas id="speed-chart"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>Angle Tracker</h3>
+          <canvas id="angle-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="bad-reps-list" id="bad-reps-section" style="display: none">
+        <h3>📝 Form Feedback</h3>
+        <ul id="bad-reps-ul"></ul>
+      </div>
+
+      <button id="restart-btn" onclick="restart()">NEW WORKOUT</button>
+    </div>
+
+    <script>
+      // ══════════════════════════════════════
+      // STATE
+      // ══════════════════════════════════════
+      let ws = null;
+      let captureInterval = null;
+      let stream = null;
+      let targetReps = 10;
+      let speedChart = null;
+      let angleChart = null;
+
+      const SERVER_URL = window.location.host;
+
+      // ══════════════════════════════════════
+      // VOICE
+      // ══════════════════════════════════════
+      function speak(text) {
+        if (!text) return;
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.rate = 1.1;
+        msg.pitch = 1;
+        window.speechSynthesis.speak(msg);
+      }
+
+      // ══════════════════════════════════════
+      // START WORKOUT
+      // ══════════════════════════════════════
+      async function startWorkout() {
+        const exercise = document.getElementById("exercise-select").value;
+        targetReps =
+          parseInt(document.getElementById("target-reps").value) || 10;
+
+        // Show workout screen
+        document.getElementById("setup-screen").style.display = "none";
+        document.getElementById("workout-screen").style.display = "flex";
+        document.getElementById("exercise-title").textContent = exercise
+          .replace(/_/g, " ")
+          .toUpperCase();
+        document.getElementById("target-display").textContent = targetReps;
+
+        // Start camera
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        document.getElementById("camera").srcObject = stream;
+
+        // Connect WebSocket
+        const wsUrl = `ws://${SERVER_URL}/ws/${exercise}/${targetReps}`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          document.getElementById("status-msg").textContent =
+            "Connected. Get ready!";
+          startCapturing();
+        };
+
+        ws.onmessage = (e) => {
+          const event = JSON.parse(e.data);
+          handleEvent(event);
+        };
+
+        ws.onclose = () => {
+          stopCapturing();
+        };
+
+        ws.onerror = () => {
+          document.getElementById("status-msg").textContent =
+            "Connection error.";
+        };
+      }
+
+      // ══════════════════════════════════════
+      // FRAME CAPTURE → SEND TO SERVER
+      // ══════════════════════════════════════
+      function startCapturing() {
+        const video = document.getElementById("camera");
+        const canvas = document.getElementById("capture-canvas");
+        const ctx = canvas.getContext("2d");
+
+        captureInterval = setInterval(() => {
+          if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+          canvas.width = 640;
+          canvas.height = 480;
+          ctx.drawImage(video, 0, 0, 640, 480);
+
+          const base64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
+          ws.send(JSON.stringify({ type: "frame", frame: base64 }));
+        }, 100); // 10fps
+      }
+
+      function stopCapturing() {
+        if (captureInterval) {
+          clearInterval(captureInterval);
+          captureInterval = null;
+        }
+      }
+
+      // ══════════════════════════════════════
+      // HANDLE SERVER EVENTS
+      // ══════════════════════════════════════
+      function handleEvent(event) {
+        if (event.say) speak(event.say);
+
+        switch (event.event) {
+          case "ready":
+            document.getElementById("status-msg").textContent =
+              "Ready — begin your reps!";
+            break;
+
+          case "rep_completed":
+            document.getElementById("good-reps-display").textContent =
+              event.good_reps;
+            document.getElementById("bad-reps-display").textContent =
+              event.bad_reps;
+            document.getElementById("form-warning").textContent = "";
+            updateProgress(event.good_reps);
+            break;
+
+          case "bad_rep":
+            document.getElementById("bad-reps-display").textContent =
+              event.bad_reps;
+            break;
+
+          case "form_error":
+            document.getElementById("form-warning").textContent =
+              "⚠ " + (event.say || "Check your form");
+            setTimeout(() => {
+              document.getElementById("form-warning").textContent = "";
+            }, 3000);
+            break;
+
+          case "frame_update":
+            document.getElementById("good-reps-display").textContent =
+              event.good_reps;
+            document.getElementById("bad-reps-display").textContent =
+              event.bad_reps;
+            break;
+
+          case "workout_complete":
+            stopCapturing();
+            stopCamera();
+            showAnalytics(event.analytics);
+            break;
+        }
+      }
+
+      // ══════════════════════════════════════
+      // PROGRESS BAR
+      // ══════════════════════════════════════
+      function updateProgress(goodReps) {
+        const pct = Math.min(100, (goodReps / targetReps) * 100);
+        document.getElementById("progress-bar").style.width = pct + "%";
+      }
+
+      // ══════════════════════════════════════
+      // STOP WORKOUT MANUALLY
+      // ══════════════════════════════════════
+      function stopWorkout() {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "stop" }));
+        }
+      }
+
+      function stopCamera() {
+        if (stream) {
+          stream.getTracks().forEach((t) => t.stop());
+          stream = null;
+        }
+      }
+
+      // ══════════════════════════════════════
+      // SHOW ANALYTICS
+      // ══════════════════════════════════════
+      function showAnalytics(data) {
+        document.getElementById("workout-screen").style.display = "none";
+        document.getElementById("analytics-screen").style.display = "flex";
+
+        document.getElementById("final-good").textContent = data.good_reps;
+        document.getElementById("final-bad").textContent = data.bad_reps;
+
+        // Destroy old charts if exist
+        if (speedChart) speedChart.destroy();
+        if (angleChart) angleChart.destroy();
+
+        // Rep Speed Chart (Bar)
+        speedChart = new Chart(document.getElementById("speed-chart"), {
+          type: "bar",
+          data: {
+            labels: data.rep_durations.map((_, i) => `Rep ${i + 1}`),
+            datasets: [
+              {
+                label: "Seconds",
+                data: data.rep_durations,
+                backgroundColor: "#ff003c",
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: "#aaa" }, grid: { color: "#222" } },
+              y: { ticks: { color: "#aaa" }, grid: { color: "#222" } },
+            },
+          },
+        });
+
+        // Angle History Chart (Line)
+        const step = Math.max(1, Math.floor(data.angle_history.length / 200));
+        const sampledAngles = data.angle_history.filter(
+          (_, i) => i % step === 0,
+        );
+
+        angleChart = new Chart(document.getElementById("angle-chart"), {
+          type: "line",
+          data: {
+            labels: sampledAngles.map((_, i) => i),
+            datasets: [
+              {
+                label: "Degrees",
+                data: sampledAngles,
+                borderColor: "#00ffcc",
+                backgroundColor: "rgba(0,255,204,0.1)",
+                borderWidth: 2,
+                pointRadius: 0,
+                fill: true,
+                tension: 0.4,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { display: false },
+              y: { ticks: { color: "#aaa" }, grid: { color: "#222" } },
+            },
+          },
+        });
+
+        // Bad Reps Feedback
+        if (data.bad_reps_list && data.bad_reps_list.length > 0) {
+          document.getElementById("bad-reps-section").style.display = "block";
+          const ul = document.getElementById("bad-reps-ul");
+          ul.innerHTML = "";
+          data.bad_reps_list.forEach((note) => {
+            const li = document.createElement("li");
+            li.textContent = note;
+            ul.appendChild(li);
+          });
+        }
+      }
+
+      // ══════════════════════════════════════
+      // RESTART
+      // ══════════════════════════════════════
+      function restart() {
+        document.getElementById("analytics-screen").style.display = "none";
+        document.getElementById("setup-screen").style.display = "flex";
+        document.getElementById("good-reps-display").textContent = "0";
+        document.getElementById("bad-reps-display").textContent = "0";
+        document.getElementById("progress-bar").style.width = "0%";
+        document.getElementById("status-msg").textContent = "Connecting...";
+        document.getElementById("form-warning").textContent = "";
+        document.getElementById("bad-reps-section").style.display = "none";
+        ws = null;
+      }
+    </script>
+  </body>
+</html>

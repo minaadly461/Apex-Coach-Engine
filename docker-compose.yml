@@ -1,0 +1,16 @@
+# docker-compose.yml
+version: "3.9"
+
+services:
+  apex-coach:
+    build: .
+    container_name: apex-coach-engine
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./engine:/app/engine
+      - ./static:/app/static
+      - ./api.py:/app/api.py
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
